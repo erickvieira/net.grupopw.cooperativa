@@ -22,3 +22,43 @@
   border: none !important;
   box-shadow: none !important;
 }
+
+.btn-margin {
+  margin: 5px;
+}
+
+.btn-box-footer {
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  color: color($colors, primary);
+}
+
+.btn-full-width {
+  width: 100% !important;
+  margin: 0 auto;
+}
+
+.light-input-list {
+  ion-item {
+    background: none !important;
+
+    ion-label {
+      color: white !important;
+    }
+    ion-input {
+      color: white !important;
+    }
+  }
+}
+
+.no-bg {
+  background: none !important;
+}
+
+.centered {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 9999 !important;
+}

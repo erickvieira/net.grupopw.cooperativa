@@ -1,6 +1,19 @@
-<ion-content padding class="background">
-
+<ion-content class="background">
+  <div class="box blur centered">
+    <ion-list no-boder class="light-input-list">
+      <ion-item>
+        <ion-label floating>Usuário</ion-label>
+        <ion-input type="email"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label floating>Senha</ion-label>
+        <ion-input type="password"></ion-input>
+      </ion-item>
+    </ion-list>
+    <button ion-button color="light" class="btn-margin btn-full-width btn-box-footer">ENTRAR</button>
+  </div>
 </ion-content>
-<ion-footer class="">
-  <button ion-button block (click)="showAlert()" no-border>text</button>
+
+<ion-footer no-boder>
+  <button ion-button block (click)="showAlert()">Cadastre-se</button>
 </ion-footer>
