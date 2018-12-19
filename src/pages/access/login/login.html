@@ -1,16 +1,19 @@
 <ion-content class="background">
-  <div class="box blur centered">
-    <ion-list no-boder class="light-input-list">
-      <ion-item>
-        <ion-label floating>Usuário</ion-label>
-        <ion-input type="email"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-label floating>Senha</ion-label>
-        <ion-input type="password"></ion-input>
-      </ion-item>
-    </ion-list>
-    <button ion-button color="light" class="btn-margin btn-full-width btn-box-footer">ENTRAR</button>
+  <div class="fade">
+    <div class="box blur centered border-box-light">
+      <ion-list no-boder class="light-input-list">
+        <ion-item>
+          <ion-label floating>Usuário</ion-label>
+          <ion-input [(ngModel)]="handler.user" #user="ngModel" type="email"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label floating>Senha</ion-label>
+          <ion-input [(ngModel)]="handler.pass" #pass="ngModel" type="password"></ion-input>
+        </ion-item>
+        <ion-item style="display: none !important"></ion-item>
+      </ion-list>
+      <button ion-button (click)="login(user.value, pass.value)" color="light" class="btn-margin btn-full-width btn-box-footer">ENTRAR</button>
+    </div>
   </div>
 </ion-content>
 
