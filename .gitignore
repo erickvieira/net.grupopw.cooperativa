@@ -13,6 +13,7 @@ log.txt
 npm-debug.log*
 
 api/*
+lab/*
 .sonarlint/
 .idea/
 .ionic/

@@ -34,14 +34,24 @@ $app-direction: ltr;
 // The "primary" color is the only required color in the map.
 
 $colors: (
-  primary:    #e47012,
-  secondary:  #d163df,
-  danger:     #f53d3d,
-  light:      #f4f4f4,
-  dark:       #222,
-  white:      #fff,
+  primary:      #05668d,
+  a-primary:    rgba(5, 102, 141, .6),
+  a2-primary:   rgba(5, 102, 141, .9),
+  secondary:    #00a896,
+  a-secondary:  rgba(0, 168, 150, .6),
+  danger:       #ff1654,
+  a-danger:     rgba(255, 22, 84, .6),
+  success:      #02c39a,
+  a-success:    rgba(2, 195, 154, .6),
+  warning:      #f0f3bd,
+  a-warning:    rgba(240, 243, 189, .6),
+  light:        #f4f4f4,
+  a-light:      rgba(244, 244, 244, .6),
+  dark:         #222222,
+  a-dark:       rgba(34, 34, 34, .6),
+  white:        #ffffff,
+  a-white:      rgba(255, 255, 255, .6),
 );
-
 
 // App iOS Variables
 // --------------------------------------------------
@@ -73,6 +83,7 @@ $colors: (
 
 @import "ionic.theme.default";
 $loginBackground: url('../../../assets/imgs/login-background.jpg');
+$mapBackground: url('../../assets/imgs/map-background.png');
 
 
 // Ionicons

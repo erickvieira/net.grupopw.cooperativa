@@ -1,16 +1,27 @@
 import { NgModule } from '@angular/core';
 import { LoginPage } from './login/login';
-import { IonicModule } from 'ionic-angular';
+import { IonicModule, IonicPageModule } from 'ionic-angular';
+import { RegisterPersonalDataPage } from './register/personal-data/register.personal-data';
+import { BrMaskerModule } from 'brmasker-ionic-3';
+import { RegisterSecurityDataPage } from './register/security-data/register.security-data';
 
 @NgModule({
   declarations: [
-    LoginPage
+    LoginPage,
+    RegisterPersonalDataPage,
+    RegisterSecurityDataPage,
   ],
   imports: [
-    IonicModule
+    BrMaskerModule,
+    IonicModule,
+    IonicPageModule.forChild(RegisterPersonalDataPage),
+    IonicPageModule.forChild(RegisterSecurityDataPage),
+    IonicPageModule.forChild(LoginPage),
   ],
   entryComponents: [
-    LoginPage
+    LoginPage,
+    RegisterPersonalDataPage,
+    RegisterSecurityDataPage,
   ],
   providers: [
   ]

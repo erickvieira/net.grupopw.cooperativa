@@ -28,9 +28,12 @@
 }
 
 .btn-box-footer {
+  margin-top: 15px !important;
+  margin-bottom: -10px !important;
   border-top-left-radius: 0 !important;
   border-top-right-radius: 0 !important;
-  color: color($colors, primary);
+  color: white;
+  background: color($colors, a-secondary);
 }
 
 .btn-full-width {
@@ -40,20 +43,63 @@
 
 .light-input-list {
   ion-item {
+    ion-label,
+    ion-select,
+    ion-datetime {
+      color: white !important;
+    }
+  }
+
+  ion-item,
+  ion-select,
+  ion-list-header,
+  ion-item-divider,
+  ion-datetime {
     width: 100% !important;
     background: none !important;
     padding-right: 15px !important;
     padding-left: 15px !important;
 
-    ion-label {
+    ion-icon {
       color: white !important;
+      font-size: 18px;
     }
-    ion-input {
+    ion-input,
+    ion-datetime {
       padding-right: 0 !important;
       padding-left: 5px !important;
       color: white !important;
     }
   }
+
+  ion-list-header,
+  ion-item-divider {
+    ion-label,
+    ion-icon {
+      color: color($colors, primary) !important;
+      font-size: 18px;
+    }
+  }
+
+  .more-top {
+    margin-top: 10px !important;
+  }
+
+  ion-list-header {
+    margin-bottom: -25px !important;
+    padding-bottom: 0 !important;
+    border: none !important;
+  }
+
+  ion-item-divider {
+    margin-top: 15px !important;
+    margin-bottom: -30px !important;
+    border: none !important;
+  }
+}
+
+.light-input-list:last-child {
+  margin-bottom: 10px !important;
 }
 
 .no-bg {
@@ -66,4 +112,57 @@
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
   z-index: 9999 !important;
+}
+
+.disapear {
+  display: none;
+}
+
+.appear {
+  display: block;
+}
+
+.faslid-in {
+  animation: faslid-in 0.5s cubic-bezier(0.550, 0.055, 0.675, 0.190) both;
+}
+
+@keyframes faslid-in {
+  0% {
+    scale: .98;
+    opacity: 0;
+  }
+  100% {
+    scale: 1;
+    opacity: 1;
+  }
+}
+
+.faslid-out {
+  animation: faslid-out 0.5s cubic-bezier(0.550, 0.055, 0.675, 0.190) both;
+}
+
+@keyframes faslid-out {
+  0% {
+    scale: 1.08;
+    opacity: 1;
+  }
+  30% {
+    scale: 1;
+    opacity: .8;
+  }
+  100% {
+    scale: 0;
+    opacity: 0;
+  }
+}
+
+ion-footer {
+  padding: 0 !important;
+
+  button {
+    margin: 0 auto !important;
+    border-radius: unset !important;
+    width: 100% !important;
+    height: 42px !important;
+  }
 }

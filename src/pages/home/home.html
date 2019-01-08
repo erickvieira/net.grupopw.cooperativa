@@ -1,18 +1,133 @@
-<ion-header>
-  <ion-navbar>
-    <button ion-button menuToggle>
+<ion-content>
+  <div class="nav backdrop-blur">
+    <button class="nav-menu" color="white"
+      ion-button secondary icon-only
+      menuToggle round outline>
       <ion-icon name="menu"></ion-icon>
     </button>
-    <ion-title>Home</ion-title>
-  </ion-navbar>
-</ion-header>
+    <button class="nav-fast-travel" color="white"
+      *ngIf="!travel.ready && !waiting"
+      ion-button secondary icon-end
+      round outline small ion-long-press [interval]="3000"
+      (click)="intProv.genericToast('Mantenha pressionado por 3 segundos')"
+      (press)="wantFastTravel = true"
+      (onPressing)="wantFastTravel ? findADriverForFastTravel() : undefined">
+      <span *ngIf="wantFastTravel" [@scaleInOutHor]>
+        VIAGEM RÁPIDA
+      </span>
+      <ion-icon name="car"></ion-icon>
+    </button>
+  </div>
 
-<ion-content padding>
-  <h3>Ionic Menu Starter</h3>
+  <agm-map [latitude]="mapCenter.lat"
+    [longitude]="mapCenter.lng"
+    [scrollwheel]="false"
+    [zoom]="zoomLevel"
+    [streetViewControl]="false"
+    [zoomControlOptions]="{ position: 'TOP_LEFT' }"
+    [styles]="mapStyles"
+    (mapClick)="onMapClick($event)">
+    <ng-container *ngIf="travel.destin">
+      <agm-marker
+        [iconUrl]="'../../assets/icon/pin-target.svg'"
+        [latitude]="travel.destin.lat"
+        [longitude]="travel.destin.lng"
+        [markerDraggable]="true"
+        (dragEnd)="onMarkerDrag($event)"
+        #markerTarget>
+      </agm-marker>
+      <agm-direction
+        [renderOptions]="{ suppressMarkers: true, polylineOptions: { strokeColor: '#f0f3bd' } }"
+        [visible]="travel.ready"
+        [origin]="travel.origin"
+        [destination]="travel.destin">
+      </agm-direction>
+    </ng-container>
 
-  <p>
-    If you get lost, the <a href="http://ionicframework.com/docs/v2">docs</a> will show you the way.
-  </p>
+    <agm-marker
+      *ngFor="let driver of drivProv.instance await"
+      [iconUrl]="'../../assets/icon/pin-car.svg'"
+      [latitude]="driver.last_loc.lat"
+      [longitude]="driver.last_loc.lng"
+      [markerDraggable]="false"
+      #markerTarget>
+    </agm-marker>
 
-  <button ion-button secondary menuToggle>Toggle Menu</button>
+    <agm-marker
+      [iconUrl]="'../../assets/icon/pin.svg'"
+      [latitude]="userProv.instance.last_loc.lat"
+      [longitude]="userProv.instance.last_loc.lng"
+      [markerDraggable]="!travel.ready"
+      (dragEnd)="onMarkerDrag($event)"
+      #marker>
+    </agm-marker>
+    <agm-circle
+      [radius]="1500"
+      [latitude]="userProv.instance.last_loc.lat"
+      [longitude]="userProv.instance.last_loc.lng"
+      [draggable]="false"
+      [clickable]="false"
+      [editable]="false"
+      [fillColor]="'#f0f3bd'"
+      [fillOpacity]="0.1">
+    </agm-circle>
+  </agm-map>
+
+  <ion-fab bottom right id="btn-geolocation"
+    [@easyInOutVer] *ngIf="!automaticUpdateLocation">
+    <button ion-fab mini color="secondary" (click)="startObservePositionAgain()">
+      <ion-icon name="locate"></ion-icon>
+    </button>
+  </ion-fab>
+
+  <div class="action-bar">
+    <div class="fade backdrop-blur"
+      [ngClass]="{'appear': waiting, 'disapear': '!waiting'}">
+      <button id="btn-cancel-travel"
+        (click)="waiting = false; travel.destin = undefined; travel.ready = false; mapCenter = userProv.instance.last_loc"
+        ion-button clear icon-end color="light">
+        CANCELAR
+        <ion-icon name="close-circle"></ion-icon>
+      </button>
+      <button id="btn-confirm-travel"
+        [@scaleInOutHor] *ngIf="searchControl.value != ''"
+        class="action-btn"
+        (click)="findADriver($event)"
+        ion-button block primary icon-end color="secondary">
+        CONFIRMAR DESTINO
+        <ion-icon name="checkmark-circle-outline"></ion-icon>
+      </button>
+    </div>
+    <div class="input-holder" [ngClass]="{ 'appear': waiting, 'disapear': !waiting }">
+      <input
+        (focus)="$event.target.select()"
+        placeholder="Destino da viagem"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="off"
+        type="text"
+        class="form-control"
+        id="mapInput"
+        #mapsAutoComplete
+        [formControl]="searchControl">
+    </div>
+    <ng-container *ngIf="travel.ready; else hasNoTargetYet">
+      <button class="action-btn"
+        [ngClass]="{ 'appear': !waiting, 'disapear': 'waiting' }"
+        ion-button block color="success" icon-end
+        (click)="intProv.genericToast('Por favor, aguarde o motorista no local marcado.')">
+        PROCURAR UM MOTORISTA AGORA
+        <ion-icon name="checkmark-circle"></ion-icon>
+      </button>
+    </ng-container>
+    <ng-template #hasNoTargetYet>
+      <button class="action-btn"
+        [ngClass]="{ 'appear': !waiting, 'disapear': 'waiting' }"
+        ion-button block primary icon-end
+        (click)="waiting = true">
+        NOVA VIAGEM
+        <ion-icon name="car"></ion-icon>
+      </button>
+    </ng-template>
+  </div>
 </ion-content>

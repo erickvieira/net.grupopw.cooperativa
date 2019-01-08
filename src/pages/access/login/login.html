@@ -1,22 +1,25 @@
 <ion-content class="background">
-  <div class="fade">
-    <div class="box blur centered border-box-light">
-      <ion-list no-boder class="light-input-list">
-        <ion-item>
-          <ion-label floating>Usuário</ion-label>
-          <ion-input [(ngModel)]="handler.user" #user="ngModel" type="email"></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-label floating>Senha</ion-label>
-          <ion-input [(ngModel)]="handler.pass" #pass="ngModel" type="password"></ion-input>
-        </ion-item>
-        <ion-item style="display: none !important"></ion-item>
-      </ion-list>
-      <button ion-button (click)="login(user.value, pass.value)" color="light" class="btn-margin btn-full-width btn-box-footer">ENTRAR</button>
-    </div>
-  </div>
+  <ion-list no-boder class="box blur centered border-box-light">
+    <form [formGroup]="loginForm" class="light-input-list"
+      (ngSubmit)="login()">
+      <ion-item>
+        <ion-label floating>E-mail</ion-label>
+        <ion-input formControlName="email" type="email"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label floating>Senha</ion-label>
+        <ion-input formControlName="password" type="password"></ion-input>
+      </ion-item>
+      <ion-item style="display: none !important"></ion-item>
+      <button ion-button
+        type="submit" color="light"
+        class="btn-margin btn-full-width btn-box-footer">
+        ENTRAR
+      </button>
+    </form>
+  </ion-list>
 </ion-content>
 
 <ion-footer no-boder>
-  <button ion-button block (click)="showAlert()">Cadastre-se</button>
+  <button ion-button block [navPush]="registerPage">Cadastre-se</button>
 </ion-footer>
