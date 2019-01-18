@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import 'rxjs/add/operator/map';
 import { User } from '../models/user.model';
-import { AngularFireDatabase, AngularFireList } from '@angular/fire/database';
+import { AngularFireDatabase } from '@angular/fire/database';
 import { AngularFireAuth } from '@angular/fire/auth';
 import * as PC from '../constants/project-constants';
 import { FirebaseDatabaseProvider } from './firebasedatabase.provider';
@@ -156,6 +156,12 @@ export class UserProvider extends FirebaseDatabaseProvider<User> {
       data => onData(data),
       error => onError(error)
     );
+  }
+
+  getAllData(id: string, callback?: (data) => void) {
+    this.searchById(id).subscribe(data => {
+      if (callback) callback(data)
+    }, err => console.error('GET USER DATA', err))
   }
 
   includeDataFromObject(object: any) {

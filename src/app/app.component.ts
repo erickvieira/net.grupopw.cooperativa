@@ -1,5 +1,5 @@
 import { Component, ViewChild } from '@angular/core';
-import { Nav, Platform, NavController, MenuController } from 'ionic-angular';
+import { Nav, Platform, MenuController } from 'ionic-angular';
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
 
@@ -7,14 +7,21 @@ import { HomePage } from '../pages/home/home';
 import { ListPage } from '../pages/list/list';
 import { LoginPage } from '../pages/access/login/login';
 import { UserProvider } from '../providers/user.provider';
+import { HTTP } from '@ionic-native/http';
 
 @Component({
-  templateUrl: 'app.html'
+  templateUrl: 'app.html',
+  providers: [
+    HTTP,
+  ]
 })
 export class MyApp {
   @ViewChild(Nav) nav: Nav;
 
   rootPage: any = LoginPage;
+  connected = false
+  loading = true
+  loadingText = 'Estabelecendo conexão...'
 
   pages: Array<{title: string, component: any}>;
 
@@ -24,14 +31,15 @@ export class MyApp {
     public splashScreen: SplashScreen,
     public userProv: UserProvider,
     public menu: MenuController,
+    public http: HTTP,
   ) {
     this.initializeApp();
 
     // used for an example of ngFor and navigation
-    this.pages = [
-      { title: 'Home', component: HomePage },
-      { title: 'List', component: ListPage }
-    ];
+    this.pages = [{
+      title: 'Tela Inicial',
+      component: HomePage
+    }];
 
   }
 
@@ -43,6 +51,20 @@ export class MyApp {
       this.statusBar.styleBlackTranslucent()
       this.statusBar.styleLightContent()
       this.splashScreen.hide()
+      this.http.get(
+        'https://google.com',
+        undefined,
+        undefined
+      ).then(_ => {
+        this.connected = true
+        this.loading = false
+        this.loadingText = 'Conectando...'
+      }).catch(err => {
+        console.error('APP.HTTP.GET', err)
+        this.connected = false
+        this.loading = false
+        this.loadingText = 'Isso está demorando...'
+      })
     });
   }
 

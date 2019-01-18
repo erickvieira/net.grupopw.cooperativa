@@ -2,6 +2,7 @@ import { Car } from "./driver.model";
 
 export class User {
   public id: string;
+  public picture?: string;
   public last_loc?: Coords;
   public name = '';
   public document = '';

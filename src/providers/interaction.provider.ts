@@ -41,8 +41,25 @@ export class InteractionProvider {
       vm.toastCtrl.create({
         message: message,
         showCloseButton: false,
-        position: 'top',
+        position: 'bottom',
         duration: duration ? duration : 5000,
+      }).present()
+      setTimeout(() => {
+        vm.alertPresented = false
+      }, duration ? duration : 5000)
+    }
+  }
+
+  genericSnackbar(message: string, duration?: number) {
+    let vm = this
+    if(!vm.alertPresented) {
+      vm.alertPresented = true
+        vm.toastCtrl.create({
+        message: message,
+        position: 'bottom',
+        duration: duration ? duration : 5000,
+        showCloseButton: true,
+        closeButtonText: "×"
       }).present()
       setTimeout(() => {
         vm.alertPresented = false

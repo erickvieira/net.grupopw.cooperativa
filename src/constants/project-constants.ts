@@ -22,21 +22,6 @@ export const AGM = {
       focused: 15,
     },
   },
-  getAddressAttribute: (
-    place: google.maps.places.PlaceResult,
-    search_type: string,
-    length_type?: string
-  ): string => {
-    let result: any = place.address_components.find((element) => {
-      return typeof element.types.find((type) => { return type === search_type }) != 'undefined';
-    });
-    if (result) {
-      result = (length_type) ? result[length_type] : result['short_name'];
-    } else {
-      result = ''
-    }
-    return result;
-  },
   styles: [
     {
       "elementType": "geometry",

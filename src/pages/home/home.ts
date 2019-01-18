@@ -1,15 +1,18 @@
 import { Component, AfterViewInit, OnInit, ViewChild, ElementRef, NgZone } from '@angular/core'
-import { NavController, MenuController, NavParams, Toast } from 'ionic-angular'
+import { NavController, MenuController, NavParams, Events, ActionSheetController } from 'ionic-angular'
 import { UserProvider } from '../../providers/user.provider'
 import { InteractionProvider } from '../../providers/interaction.provider'
 import { LoginPage } from '../access/login/login'
 import * as PC from '../../constants/project-constants'
 import { FormControl } from '@angular/forms';
-import { MapsAPILoader } from '@agm/core';
+import { MapsAPILoader, AgmCircle } from '@agm/core';
 import { LocationProvider } from '../../providers/location.provider';
 import { Geolocation } from '@ionic-native/geolocation';
 import { OnlineDriversProvider } from '../../providers/driver.provider';
 import { style, animate, transition, trigger } from '@angular/animations';
+import { User } from '../../models/user.model';
+import { InAppBrowser } from '@ionic-native/in-app-browser';
+import { SMS, SmsOptionsAndroid, SmsOptions } from '@ionic-native/sms';
 
 @Component({
   selector: 'page-home',
@@ -25,6 +28,30 @@ import { style, animate, transition, trigger } from '@angular/animations';
           opacity: 1
         })),
         animate(100, style({
+          bottom: 55,
+          opacity: 1
+        }))
+      ]),
+      transition(':leave', [
+        style({
+          opacity: 1
+        }),
+        animate(100, style({
+          opacity: 0,
+          bottom: 45,
+        }))
+      ]),
+    ]), trigger('easyInOutVerDelay250', [
+      transition(':enter', [
+        style({
+          bottom: 35,
+          opacity: 0
+        }),
+        animate(150 + 250, style({
+          bottom: 65,
+          opacity: 1
+        })),
+        animate(100 + 250, style({
           bottom: 55,
           opacity: 1
         }))
@@ -85,7 +112,14 @@ import { style, animate, transition, trigger } from '@angular/animations';
     ])
   ],
   templateUrl: 'home.html',
-  providers: [ OnlineDriversProvider, UserProvider, LocationProvider, Geolocation ]
+  providers: [
+    OnlineDriversProvider,
+    UserProvider,
+    LocationProvider,
+    Geolocation,
+    SMS,
+    InAppBrowser,
+  ]
 })
 export class HomePage implements AfterViewInit, OnInit {
 
@@ -93,16 +127,34 @@ export class HomePage implements AfterViewInit, OnInit {
   travel = {
     origin: { lat: undefined, lng: undefined },
     destin: { lat: undefined, lng: undefined },
+    destinAddress: '',
+    distance: 0,
+    duration: 0,
     ready: false,
   }
   mapCenter = PC.AGM.default.coords
   zoomLevel = PC.AGM.default.zoom.unfocused
-  locationUpdateCounter = 0
-  waiting = false
+  typingAddress = false
   wantFastTravel = false
   automaticUpdateLocation = true
   insideTheState = false
+  searchingDeviceLocation = true
 
+  showDriverData = false
+  nearbyDrivers: any[] = undefined
+  selectedDriver: User = undefined
+
+  readonly refreshPage = () => {
+    this.navCtrl.setRoot(
+      this.navCtrl.getActive().component
+    ).then(_ => {
+      this.eventCtrl.unsubscribe('#online_drivers')
+      this.eventCtrl.unsubscribe('#marker_position')
+    })
+  }
+
+  @ViewChild('searchRadius', { read: AgmCircle }) searchReadiusRef: AgmCircle
+  @ViewChild('mainDirection') directionRef: ElementRef
   @ViewChild('mapsAutoComplete') searchElementRef: ElementRef
   searchControl: FormControl
 
@@ -113,11 +165,16 @@ export class HomePage implements AfterViewInit, OnInit {
     public userProv: UserProvider,
     public drivProv: OnlineDriversProvider,
     public intProv: InteractionProvider,
+    public actionSheetCtrl: ActionSheetController,
     public mapsAPILoader: MapsAPILoader,
     public locProv: LocationProvider,
     public geolocation: Geolocation,
+    public sms: SMS,
+    public iab: InAppBrowser,
     public ngZone: NgZone,
+    public eventCtrl: Events
   ) {
+    console.log('Hello for HomePage')
     menu.enable(true)
     this.drivProv.getAllDrivers()
     this.setCurrentPosition(PC.AGM.default.coords)
@@ -126,27 +183,34 @@ export class HomePage implements AfterViewInit, OnInit {
   ngOnInit(): void {
     this.initMapsAutoComplete()
     this.observeDevicePosition()
+    this.filterOnlineDrivers()
   }
 
   ngAfterViewInit(): void {
     this.userProv.checkCredentials(() => {
       this.navCtrl.setRoot(LoginPage)
-    });
+    })
   }
 
-  _observeDevicePosition(): void {
-    console.log('starting location provider')
-    this.geolocation.watchPosition({ enableHighAccuracy: true, maximumAge: 1000 }).subscribe((resp) => {
-      if (this.automaticUpdateLocation) {
-        this.setCurrentPosition(resp.coords && resp.coords.latitude && resp.coords.longitude ? {
-          lat: resp.coords.latitude,
-          lng: resp.coords.longitude,
-        } : PC.AGM.default.coords)
-      }
-      console.log('location updated', JSON.stringify(this.userProv.instance.last_loc))
-    }, (error) => {
-      console.log('IMPOSSÍVEL OBTER A LOCALIZAÇÃO DO DISPOSITIVO: ', `${error.code} ${error.message}`)
-    });
+  ngOnDestroy(): void {
+    this.eventCtrl.unsubscribe('#online_drivers')
+    this.eventCtrl.unsubscribe('#marker_position')
+  }
+
+  filterOnlineDrivers() {
+    this.eventCtrl.subscribe('#online_drivers', () => {
+      this.nearbyDrivers = []
+      this.drivProv.instance.forEach(onlineDriver => {
+        this.searchReadiusRef.getBounds().then(bounds => {
+          let point: any = {...onlineDriver.last_loc}
+          point['checkin'] = undefined;
+          point = JSON.parse(JSON.stringify(point))
+          if (bounds.contains(point) && onlineDriver.id != this.userProv.instance.id) {
+            this.nearbyDrivers.push(onlineDriver)
+          }
+        })
+      })
+    })
   }
 
   observeDevicePosition() {
@@ -157,7 +221,7 @@ export class HomePage implements AfterViewInit, OnInit {
 
   getCurrentPosition(): void {
     this.geolocation.getCurrentPosition({ enableHighAccuracy: false }).then(resp => {
-      if (this.automaticUpdateLocation && !this.waiting) {
+      if (this.automaticUpdateLocation && !this.typingAddress && !this.travel.ready) {
         this.setCurrentPosition(resp.coords && resp.coords.latitude && resp.coords.longitude ? {
           lat: resp.coords.latitude,
           lng: resp.coords.longitude,
@@ -180,15 +244,32 @@ export class HomePage implements AfterViewInit, OnInit {
         ...position,
         checkin: Date.now()
       }
-      if (this.locationUpdateCounter < 5) {
-        this.mapCenter = position
+      if (position != PC.AGM.default.coords) {
+        this.searchingDeviceLocation = false
       }
+      this.mapCenter = position
       if (this.travel.ready) {
         this.travel.origin = position
       }
       this.zoomLevel = PC.AGM.default.zoom.focused
-      this.locationUpdateCounter++
+      this.eventCtrl.publish('#marker_position')
     }
+  }
+
+  getAddressAttribute(
+    place: google.maps.places.PlaceResult,
+    search_type: string,
+    length_type?: string
+  ) {
+    let result: any = place.address_components.find((element) => {
+      return typeof element.types.find((type) => { return type === search_type }) != 'undefined';
+    });
+    if (result) {
+      result = (length_type) ? result[length_type] : result['short_name'];
+    } else {
+      result = ''
+    }
+    return result;
   }
 
   autoCompleteListener() {
@@ -205,7 +286,9 @@ export class HomePage implements AfterViewInit, OnInit {
               console.error('No geometry was encontred.')
               return;
             }
-            this.insideTheState = PC.AGM.getAddressAttribute(place, 'administrative_area_level_1', 'short_name') == 'GO'
+            let currentZone = this.getAddressAttribute(place, 'administrative_area_level_1', 'short_name')
+            this.insideTheState = [ 'GO', 'DF' ].includes(currentZone)
+            this.travel.destinAddress = this.getAddressAttribute(place, 'premise', 'long_name')
             this.travel.origin = this.userProv.instance.last_loc
             this.travel.destin = place.geometry.location.toJSON() as {lat: number, lng: number}
             this.zoomLevel = PC.AGM.default.zoom.focused
@@ -215,6 +298,10 @@ export class HomePage implements AfterViewInit, OnInit {
         throw error
       });
     }
+  }
+
+  ceiledDistance() {
+    return Math.ceil(this.travel.distance)
   }
 
   findADriverForFastTravel() {
@@ -227,7 +314,8 @@ export class HomePage implements AfterViewInit, OnInit {
 
   findADriver(event: any) {
     if (this.insideTheState) {
-      this.waiting = false
+      this.updateTravelDistance()
+      this.typingAddress = false
       this.travel.ready = true
     } else {
       this.travel.destin = undefined
@@ -245,7 +333,7 @@ export class HomePage implements AfterViewInit, OnInit {
   onMarkerDrag(event: any) {
     this.automaticUpdateLocation = false;
     if (event.coords) {
-      this.intProv.genericToast(
+      this.intProv.genericSnackbar(
         'Você alterou o local combinado com o motorista. Agora ele vai te buscar no local onde o marcador foi colocado, e não mais na localização do seu aparelho.'
       )
       this.setCurrentPosition(event.coords)
@@ -255,7 +343,83 @@ export class HomePage implements AfterViewInit, OnInit {
 
   startObservePositionAgain() {
     this.automaticUpdateLocation = true;
-    this.intProv.genericToast('O motorista vai chegar até você através da localização do aparelho.', 2000)
+    this.searchingDeviceLocation = true;
+    this.intProv.genericSnackbar('O motorista vai chegar até você através da localização do aparelho.', 2000)
+  }
+
+  updateTravelDistance() {
+    let page = this
+    new google.maps.DirectionsService().route({
+      origin: this.travel.origin,
+      destination: this.travel.destin,
+      travelMode: google.maps.TravelMode.DRIVING
+    }, (response, status) => {
+      if (status == google.maps.DirectionsStatus.OK) {
+        let distanceInMeters = response.routes[0].legs[0].distance.value / 1000
+        let durationInSeconds = Math.ceil(response.routes[0].legs[0].duration.value / 60)
+        page.travel.distance = distanceInMeters
+        page.travel.duration = durationInSeconds
+      }
+    })
+  }
+
+  getDriverInfo() {
+    if (this.nearbyDrivers.length == 0) {
+      this.intProv.genericAlert('Oops!', 'Desculpe, mas não há motoristas disponíveis na sua região.')
+    } else {
+      let random = Math.floor(
+        Math.random() * this.nearbyDrivers.length
+      )
+      let selected = this.nearbyDrivers[random]
+      this.userProv.getAllData(selected.id, (data) => {
+        this.selectedDriver = data[0] as User
+        this.showDriverData = true
+        let pic = this.selectedDriver.picture
+        const defaultPic = './assets/icon/default-contact.png'
+        let name = this.selectedDriver.name
+        this.selectedDriver.name = `${name.split(' ')[0]} ${name.split(' ')[1]}`
+        this.selectedDriver.picture = pic ? pic : defaultPic
+        this.travel.destin = this.selectedDriver.last_loc
+        this.intProv.genericAlert('Aguarde', 'O motorista está a caminho.')
+        console.log('SELECTED DRIVER:', JSON.stringify(this.selectedDriver))
+      })
+    }
+  }
+
+  showDriverDetailedInfo() {
+    let btnSearchImages = {
+      text: `${this.selectedDriver.car.model}, ${this.selectedDriver.car.color}`,
+      icon: 'logo-google',
+      handler: () => {
+        this.iab.create(`https://www.google.com/search?tbm=isch&q=${btnSearchImages.text}`, '_system')
+      }
+    }
+    let actionSheet = this.actionSheetCtrl.create({
+      title: ``,
+      enableBackdropDismiss: true,
+      buttons: [{
+        text: `Enviar SMS para ${this.selectedDriver.name.split(' ')[0]}`,
+        icon: 'mail',
+        handler: () => {
+          this.sms.send(
+            this.selectedDriver.phone,
+            'Olá',
+            {
+              android: {
+                intent: 'INTENT'
+              }
+            } as SmsOptions
+          )
+        }
+      }, {
+        ...btnSearchImages
+      }, {
+        text: 'Fechar',
+        icon: 'close',
+        role: 'destructive',
+      }]
+    });
+    actionSheet.present();
   }
 
 }

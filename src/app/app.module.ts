@@ -57,7 +57,7 @@ import { LongPressModule } from 'ionic-long-press';
     AngularFireModule.initializeApp(firebaseConfig.config),
     AngularFireDatabaseModule,
     AngularFireAuthModule,
-    LongPressModule
+    LongPressModule,
   ],
   bootstrap: [IonicApp],
   entryComponents: [

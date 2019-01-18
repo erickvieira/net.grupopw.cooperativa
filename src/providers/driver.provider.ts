@@ -2,17 +2,18 @@ import { Injectable } from '@angular/core';
 import 'rxjs/add/operator/map';
 import { Driver } from '../models/driver.model';
 import { AngularFireDatabase, AngularFireList } from '@angular/fire/database';
-import * as PC from '../constants/project-constants';
 import { FirebaseDatabaseProvider } from './firebasedatabase.provider';
-import { Observable } from 'rxjs';
+import { Events } from 'ionic-angular';
 
 @Injectable()
-export class OnlineDriversProvider extends FirebaseDatabaseProvider<AngularFireList<Driver[]>> {
+export class OnlineDriversProvider extends FirebaseDatabaseProvider<AngularFireList<Driver>> {
 
-  public instance: AngularFireList<Driver[]> = undefined
+  public instance: Driver[] = undefined
+  public selectedDriver: Driver = undefined
 
   constructor(
     public afDB: AngularFireDatabase,
+    private eventCtrl: Events
   ) {
     super(afDB, 'online_drivers', undefined)
   }
@@ -20,6 +21,7 @@ export class OnlineDriversProvider extends FirebaseDatabaseProvider<AngularFireL
   getAllDrivers(callback?: (drivers) => void) {
     this.searchByField({key: 'available', value: true}).subscribe(drivers => {
       this.instance = drivers
+      this.eventCtrl.publish('#online_drivers')
       console.warn('ALL DRIVERS', JSON.stringify(this.instance))
       if (callback) callback(this.instance)
     }, error => console.error('ALL DRIVERS', JSON.stringify(error)))
